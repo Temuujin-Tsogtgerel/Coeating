@@ -54,6 +54,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.generativeai)
 
+    // Material Icons Extended dependency for Compose icons (e.g., MoreVert, Check, Close)
+    implementation("androidx.compose.material:material-icons-extended:1.4.0")
+
     // Added CameraX dependencies for photo capture functionality.
     implementation("androidx.camera:camera-core:1.1.0")
     implementation("androidx.camera:camera-camera2:1.1.0")

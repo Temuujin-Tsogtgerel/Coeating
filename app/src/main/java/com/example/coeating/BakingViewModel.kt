@@ -1,6 +1,7 @@
 package com.example.coeating
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
@@ -11,9 +12,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+// Data class for storing each scan's result along with an extracted food name.
+data class ScanResult(val foodName: String, val details: String)
+
 class BakingViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Initial)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    // List of previous scans.
+    private val _previousScans = mutableStateListOf<ScanResult>()
+    val previousScans: List<ScanResult> get() = _previousScans
 
     private val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
@@ -34,8 +42,13 @@ class BakingViewModel : ViewModel() {
                 )
                 println("DEBUG: Received response: ${response.text}")
                 response.text?.let { outputContent ->
-                    // Dummy overall score logic: if the output contains "friendly", mark as pass.
+                    // Dummy overall score logic: if output contains "friendly", mark as pass.
                     val score = outputContent.contains("friendly", ignoreCase = true)
+                    // Extract a food name using a simple regex.
+                    val regex = Regex("image of (?:a|an)?\\s*(\\w+)", RegexOption.IGNORE_CASE)
+                    val match = regex.find(outputContent)
+                    val foodName = match?.groups?.get(1)?.value ?: "Unnamed Scan"
+                    _previousScans.add(ScanResult(foodName, outputContent))
                     _uiState.value = UiState.Success(outputContent, score)
                 } ?: run {
                     _uiState.value = UiState.Error("Response text was null")

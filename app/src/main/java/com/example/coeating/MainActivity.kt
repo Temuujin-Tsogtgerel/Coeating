@@ -1,7 +1,6 @@
 package com.example.coeating
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -12,15 +11,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.coeating.ui.CoEatingScreen
+import com.example.coeating.ui.CosmeticsScreen
+import com.example.coeating.ui.PreferenceSelectionScreen
+import com.example.coeating.ui.PreviousScansScreen
 import com.example.coeating.ui.theme.CoeatingTheme
 import java.io.File
 import java.io.IOException
@@ -35,13 +37,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var photoUri: Uri
     private lateinit var photoFile: File
 
-    // State to hold the captured image.
+    // Holds the latest captured image.
     private var capturedImage = mutableStateOf<Bitmap?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Register launcher for taking a picture.
+        // Register a launcher for taking a picture.
         takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) {
                 val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
@@ -49,12 +51,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Register launcher for requesting camera permission.
+        // Register a launcher for requesting CAMERA permission.
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 dispatchTakePictureIntent()
             } else {
-                // Handle permission denial if needed.
+                // Permission denied. Handle if needed.
             }
         }
 
@@ -63,51 +65,80 @@ class MainActivity : ComponentActivity() {
                 val bakingViewModel: BakingViewModel = viewModel()
                 val uiState by bakingViewModel.uiState.collectAsState()
 
-                // Retrieve saved dietary preferences.
-                val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                var savedPreferences by remember { mutableStateOf(prefs.getString("dietary_preferences", "") ?: "") }
-                var showPreferencesDialog by remember { mutableStateOf(savedPreferences.isEmpty()) }
+                // Simple string-based navigation for demonstration:
+                // "selection" -> PreferenceSelectionScreen
+                // "main"      -> CoEatingScreen (scanning flow)
+                // "previous"  -> PreviousScansScreen
+                // "cosmetics" -> CosmeticsScreen (placeholder)
+                var currentScreen by remember { mutableStateOf("selection") }
 
-                // When an image is captured, build the prompt and send it.
+                // If an image was captured, send it to the BakingViewModel for scanning.
                 capturedImage.value?.let { bitmap ->
-                    val promptText = if (savedPreferences.isNotBlank()) {
-                        "Are these ingredients ${savedPreferences.trim()} friendly?"
-                    } else {
-                        "Hello, Gemini!"
-                    }
+                    val promptText = "Hello, Gemini!"
                     bakingViewModel.sendPrompt(bitmap, promptText)
                     capturedImage.value = null
                 }
 
-                if (showPreferencesDialog) {
-                    PreferencesDialog(
-                        initialText = savedPreferences,
-                        onSave = { input ->
-                            savedPreferences = input
-                            prefs.edit().putString("dietary_preferences", input).apply()
-                            showPreferencesDialog = false
-                        }
-                    )
-                } else {
-                    CoEatingScreen(
-                        onTakePhotoClick = { checkCameraPermissionAndTakePhoto() },
-                        apiResult = when (uiState) {
-                            is UiState.Success -> (uiState as UiState.Success).output
-                            is UiState.Error -> "Error: " + (uiState as UiState.Error).message
-                            is UiState.Loading -> "Loading..."
-                            else -> ""
-                        },
-                        overallScore = when (uiState) {
-                            is UiState.Success -> (uiState as UiState.Success).overallScore
-                            else -> null
-                        },
-                        dietaryPreferences = savedPreferences
-                    )
+                when (currentScreen) {
+                    "selection" -> {
+                        // The welcome screen with big cards for "Dietary" & "Cosmetics"
+                        PreferenceSelectionScreen(
+                            userName = "John",  // or load from SharedPreferences
+                            onDietaryClick = {
+                                // Navigate to scanning flow
+                                currentScreen = "main"
+                            },
+                            onCosmeticsClick = {
+                                // Navigate to cosmetics placeholder
+                                currentScreen = "cosmetics"
+                            }
+                        )
+                    }
+                    "main" -> {
+                        // Your existing scanning screen
+                        CoEatingScreen(
+                            onTakePhotoClick = { checkCameraPermissionAndTakePhoto() },
+                            apiResult = when (uiState) {
+                                is UiState.Success -> (uiState as UiState.Success).output
+                                is UiState.Error -> "Error: " + (uiState as UiState.Error).message
+                                is UiState.Loading -> "Loading..."
+                                else -> ""
+                            },
+                            overallScore = when (uiState) {
+                                is UiState.Success -> (uiState as UiState.Success).overallScore
+                                else -> null
+                            },
+                            dietaryPreferences = "",  // Or load from user prefs if needed
+                            onChangePreferences = {
+                                // If you want a dialog or separate logic for changing preferences
+                            },
+                            onShowPreviousScans = {
+                                currentScreen = "previous"
+                            }
+                        )
+                    }
+                    "previous" -> {
+                        // The list of previous scans
+                        PreviousScansScreen(
+                            previousScans = bakingViewModel.previousScans,
+                            onBack = { currentScreen = "selection" }
+                        )
+                    }
+                    "cosmetics" -> {
+                        // Placeholder for cosmetics flow
+                        CosmeticsScreen(
+                            onBack = { currentScreen = "selection" }
+                        )
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Checks if CAMERA permission is granted and either requests permission
+     * or starts camera capture.
+     */
     private fun checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             dispatchTakePictureIntent()
@@ -116,6 +147,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Creates a temporary file and launches the camera intent.
+     */
     private fun dispatchTakePictureIntent() {
         try {
             photoFile = createImageFile()
