@@ -58,6 +58,7 @@ dependencies {
     // Remove duplicate Material3 dependency if present:
     // implementation(libs.androidx.material3)
     implementation(libs.generativeai)
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
     // CameraX dependencies for photo capture functionality.
     implementation("androidx.camera:camera-core:1.1.0")
