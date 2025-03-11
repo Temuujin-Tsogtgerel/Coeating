@@ -115,7 +115,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
                         val prompt = "Analyze the ingredients to determine the product type. " +
-                                "If the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
+                                "Return the product type on the first line in the format 'Product Type: [name]'. " +
+                                "Then, if the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
                                 "If it is identified as a cosmetic, assess whether it aligns with the $cosmeticPreferences. " +
                                 "Present your findings in bullet points."
                         bakingViewModel.sendPrompt(bitmap, prompt)

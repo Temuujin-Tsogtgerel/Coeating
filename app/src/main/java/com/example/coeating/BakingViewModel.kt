@@ -24,7 +24,7 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
     private val _previousScans = mutableListOf<ScanResult>()
     val previousScans: List<ScanResult> get() = _previousScans
 
-    // Define the generative model – ensure the dependency is added and BuildConfig.apiKey is set.
+    // Define the generative model. Ensure that you have added the dependency and that BuildConfig.apiKey is set.
     private val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
         apiKey = BuildConfig.apiKey
@@ -52,9 +52,13 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
                 }
                 // Dummy overall score logic.
                 val score = outputContent.contains("friendly", ignoreCase = true)
-                val regex = Regex("image of (?:a|an)?\\s*(\\w+)", RegexOption.IGNORE_CASE)
+
+                // Updated regex extraction.
+                // This expects the generative model to return the product name in the format:
+                // "Product Name: <name>"
+                val regex = Regex("Product Type:\\s*(.+)", RegexOption.IGNORE_CASE)
                 val match = regex.find(outputContent)
-                val foodName = match?.groups?.get(1)?.value ?: "Unnamed Scan"
+                val foodName = match?.groups?.get(1)?.value?.trim() ?: "Unnamed Scan"
 
                 // Persist the scan result.
                 val entity = ScanResultEntity(name = foodName, details = outputContent)
