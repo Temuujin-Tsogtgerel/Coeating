@@ -24,7 +24,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +34,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.coeating.ScanResult
+
+@Composable
+fun ScanCard(
+    scan: ScanResult,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF465B53)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Display scan id as metadata.
+            Text(
+                text = "Scan ID: ${scan.id}",
+                style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.7f))
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = scan.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            val snippet = if (scan.details.length > 50)
+                scan.details.substring(0, 50) + "..."
+            else
+                scan.details
+            Text(
+                text = snippet,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+        }
+    }
+}
 
 @Composable
 fun ScanHistory(
@@ -66,33 +104,15 @@ fun ScanHistory(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             } else {
+                // Explanation text before the scan cards.
+                Text(
+                    text = "Your scan history is listed below. Each scan card shows its unique ID and a brief overview of the scan details. Tap a card to view full details.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 LazyColumn(contentPadding = PaddingValues(16.dp)) {
                     items(previousScans) { scan ->
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = Color(0xFF465B53),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable { selectedScan = scan }
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = scan.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                val snippet = if (scan.details.length > 50)
-                                    scan.details.substring(0, 50) + "..."
-                                else
-                                    scan.details
-                                Text(
-                                    text = snippet,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
+                        ScanCard(scan = scan, onClick = { selectedScan = scan })
                     }
                 }
             }
@@ -106,18 +126,17 @@ fun ScanDetailScreen(
     onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
-    // Use a scroll state so that the entire content can be scrolled if needed.
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        // Back button to return to the list view.
+        // Back button
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
-        // Display scan details in a Card.
+        // Card with scan details, including the scan id.
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,6 +152,11 @@ fun ScanDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
+                    text = "Scan ID Number: ${scan.id}",
+                    style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.7f))
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
                     text = "Food: ${scan.name}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
@@ -145,7 +169,7 @@ fun ScanDetailScreen(
                 )
             }
         }
-        // Delete button – user can scroll down to see it if content is long.
+        // Delete button – user can remove the scan.
         Button(
             onClick = onDelete,
             modifier = Modifier
