@@ -1,26 +1,25 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-package com.example.coeating.ui
+package com.example.coeating.ui.theme
 
-import androidx.compose.material3.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.example.coeating.ui.components.LargeBlock
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CosmeticsScreen(
     onBack: () -> Unit
@@ -28,19 +27,12 @@ fun CosmeticsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cosmetics & Personal Care", style = MaterialTheme.typography.headlineSmall) },
+                title = { Text("Cosmetics & Personal Care") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { innerPadding ->
@@ -48,14 +40,21 @@ fun CosmeticsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
-            Text("Placeholder screen for selecting cosmetics & personal care preferences.")
-            Button(onClick = onBack, modifier = Modifier.padding(top = 16.dp)) {
-                Text("Go Back")
-            }
+            Text(
+                text = "Select your cosmetics & personal care preferences.",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            // A sample block – add additional options as needed
+            LargeBlock(
+                title = "Cosmetics",
+                subtext = "Customize your cosmetics settings",
+                icon = Icons.Filled.Settings,
+                backgroundColor = Color(0xFFF8635E),
+                onClick = onBack
+            )
         }
     }
 }

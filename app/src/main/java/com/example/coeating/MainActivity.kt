@@ -11,24 +11,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.coeating.ui.CoEatingScreen
-import com.example.coeating.ui.CosmeticsScreen
-import com.example.coeating.ui.PreferenceSelectionScreen
-import com.example.coeating.ui.PreviousScansScreen
+import com.example.coeating.BakingViewModel
+import com.example.coeating.ui.theme.CoEatingScreen
+import com.example.coeating.ui.theme.HomeScreen
+import com.example.coeating.ui.theme.PreferencesScreen
+import com.example.coeating.ui.theme.PreviousScansScreen
 import com.example.coeating.ui.theme.CoeatingTheme
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class MainActivity : ComponentActivity() {
 
@@ -37,108 +38,109 @@ class MainActivity : ComponentActivity() {
     private lateinit var photoUri: Uri
     private lateinit var photoFile: File
 
-    // Holds the latest captured image.
+    // Holds the captured image
     private var capturedImage = mutableStateOf<Bitmap?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Register a launcher for taking a picture.
-        takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-            if (success) {
-                val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
-                capturedImage.value = bitmap
+        // Register the picture-taking launcher
+        takePictureLauncher =
+            registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+                if (success) {
+                    val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+                    capturedImage.value = bitmap
+                }
             }
-        }
 
-        // Register a launcher for requesting CAMERA permission.
-        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                dispatchTakePictureIntent()
-            } else {
-                // Permission denied. Handle if needed.
+        // Register permission request
+        requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    dispatchTakePictureIntent()
+                }
             }
-        }
 
         setContent {
             CoeatingTheme {
                 val bakingViewModel: BakingViewModel = viewModel()
-                val uiState by bakingViewModel.uiState.collectAsState()
+                val currentUiState = bakingViewModel.uiState.collectAsState().value
 
-                // Simple string-based navigation for demonstration:
-                // "selection" -> PreferenceSelectionScreen
-                // "main"      -> CoEatingScreen (scanning flow)
-                // "previous"  -> PreviousScansScreen
-                // "cosmetics" -> CosmeticsScreen (placeholder)
-                var currentScreen by remember { mutableStateOf("selection") }
+                // Track user preferences
+                var userName by remember { mutableStateOf("") }
+                var dietaryPreferences by remember { mutableStateOf("") }
+                var cosmeticPreferences by remember { mutableStateOf("") }
 
-                // If an image was captured, send it to the BakingViewModel for scanning.
-                capturedImage.value?.let { bitmap ->
-                    val promptText = "Hello, Gemini!"
-                    bakingViewModel.sendPrompt(bitmap, promptText)
-                    capturedImage.value = null
+                // Keep track of which screen to show
+                var currentScreen by remember { mutableStateOf("Home") }
+
+                // On first run (or whenever userName is blank), force the Preferences screen
+                LaunchedEffect(Unit) {
+                    if (userName.isBlank()) {
+                        currentScreen = "Preferences"
+                    }
+                }
+
+                // If an image was captured, send it to the model
+                LaunchedEffect(capturedImage.value) {
+                    capturedImage.value?.let { bitmap ->
+                        val prompt = "Check ingredients. If it's food, does it fit $dietaryPreferences? " +
+                                "If it's cosmetics, does it fit $cosmeticPreferences?"
+                        bakingViewModel.sendPrompt(bitmap, prompt)
+                        capturedImage.value = null
+                    }
                 }
 
                 when (currentScreen) {
-                    "selection" -> {
-                        // The welcome screen with big cards for "Dietary" & "Cosmetics"
-                        PreferenceSelectionScreen(
-                            userName = "John",  // or load from SharedPreferences
-                            onDietaryClick = {
-                                // Navigate to scanning flow
-                                currentScreen = "main"
-                            },
-                            onCosmeticsClick = {
-                                // Navigate to cosmetics placeholder
-                                currentScreen = "cosmetics"
-                            }
+                    "Home" -> {
+                        HomeScreen(
+                            userName = userName,
+                            onScanClick = { currentScreen = "Scan" },
+                            onPreviousScansClick = { currentScreen = "PreviousScans" },
+                            onPreferencesClick = { currentScreen = "Preferences" }
                         )
                     }
-                    "main" -> {
-                        // Your existing scanning screen
+                    "Scan" -> {
                         CoEatingScreen(
                             onTakePhotoClick = { checkCameraPermissionAndTakePhoto() },
-                            apiResult = when (uiState) {
-                                is UiState.Success -> (uiState as UiState.Success).output
-                                is UiState.Error -> "Error: " + (uiState as UiState.Error).message
+                            apiResult = when (currentUiState) {
+                                is UiState.Success -> currentUiState.output
+                                is UiState.Error -> "Error: ${currentUiState.message}"
                                 is UiState.Loading -> "Loading..."
                                 else -> ""
                             },
-                            overallScore = when (uiState) {
-                                is UiState.Success -> (uiState as UiState.Success).overallScore
-                                else -> null
-                            },
-                            dietaryPreferences = "",  // Or load from user prefs if needed
-                            onChangePreferences = {
-                                // If you want a dialog or separate logic for changing preferences
-                            },
-                            onShowPreviousScans = {
-                                currentScreen = "previous"
-                            }
+                            overallScore = if (currentUiState is UiState.Success) currentUiState.overallScore else null,
+                            dietaryPreferences = dietaryPreferences,
+                            cosmeticPreferences = cosmeticPreferences,
+                            onChangePreferences = { currentScreen = "Preferences" },
+                            onShowPreviousScans = { currentScreen = "PreviousScans" },
+                            onBack = { currentScreen = "Home" }
                         )
                     }
-                    "previous" -> {
-                        // The list of previous scans
+                    "PreviousScans" -> {
                         PreviousScansScreen(
                             previousScans = bakingViewModel.previousScans,
-                            onBack = { currentScreen = "selection" }
+                            onBack = { currentScreen = "Home" }
                         )
                     }
-                    "cosmetics" -> {
-                        // Placeholder for cosmetics flow
-                        CosmeticsScreen(
-                            onBack = { currentScreen = "selection" }
-                        )
+                    "Preferences" -> {
+                        PreferencesScreen(
+                            initialUserName = userName,
+                            initialDietaryPreferences = dietaryPreferences,
+                            initialCosmeticPreferences = cosmeticPreferences
+                        ) { newUserName: String, newDiet: String, newCosmetic: String ->
+                            // Save preferences and return to Home screen
+                            userName = newUserName
+                            dietaryPreferences = newDiet
+                            cosmeticPreferences = newCosmetic
+                            currentScreen = "Home"
+                        }
                     }
                 }
             }
         }
     }
 
-    /**
-     * Checks if CAMERA permission is granted and either requests permission
-     * or starts camera capture.
-     */
     private fun checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             dispatchTakePictureIntent()
@@ -147,9 +149,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Creates a temporary file and launches the camera intent.
-     */
     private fun dispatchTakePictureIntent() {
         try {
             photoFile = createImageFile()
@@ -166,7 +165,7 @@ class MainActivity : ComponentActivity() {
 
     @Throws(IOException::class)
     private fun createImageFile(): File {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir: File = getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }

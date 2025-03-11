@@ -44,6 +44,10 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    // Use Material3 with version 1.3.1
+    implementation("androidx.compose.material3:material3:1.3.1")
+    // Material Icons Extended dependency for Compose icons
+    implementation("androidx.compose.material:material-icons-extended:1.4.0")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
@@ -51,13 +55,11 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    // Remove duplicate Material3 dependency if present:
+    // implementation(libs.androidx.material3)
     implementation(libs.generativeai)
 
-    // Material Icons Extended dependency for Compose icons (e.g., MoreVert, Check, Close)
-    implementation("androidx.compose.material:material-icons-extended:1.4.0")
-
-    // Added CameraX dependencies for photo capture functionality.
+    // CameraX dependencies for photo capture functionality.
     implementation("androidx.camera:camera-core:1.1.0")
     implementation("androidx.camera:camera-camera2:1.1.0")
     implementation("androidx.camera:camera-lifecycle:1.1.0")

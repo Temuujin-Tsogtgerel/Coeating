@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// Data class for storing each scan's result along with an extracted food name.
+// Data class for storing scan results.
 data class ScanResult(val foodName: String, val details: String)
 
 class BakingViewModel : ViewModel() {
@@ -33,18 +33,16 @@ class BakingViewModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                println("DEBUG: Sending prompt: $prompt")
                 val response = generativeModel.generateContent(
                     content {
                         image(bitmap)
                         text(prompt)
                     }
                 )
-                println("DEBUG: Received response: ${response.text}")
                 response.text?.let { outputContent ->
-                    // Dummy overall score logic: if output contains "friendly", mark as pass.
+                    // Dummy overall score: mark as pass if the response contains "friendly".
                     val score = outputContent.contains("friendly", ignoreCase = true)
-                    // Extract a food name using a simple regex.
+                    // Extract a food name (using a simple regex).
                     val regex = Regex("image of (?:a|an)?\\s*(\\w+)", RegexOption.IGNORE_CASE)
                     val match = regex.find(outputContent)
                     val foodName = match?.groups?.get(1)?.value ?: "Unnamed Scan"
@@ -54,7 +52,6 @@ class BakingViewModel : ViewModel() {
                     _uiState.value = UiState.Error("Response text was null")
                 }
             } catch (e: Exception) {
-                println("DEBUG: Error in API call: ${e.localizedMessage}")
                 _uiState.value = UiState.Error(e.localizedMessage ?: "Unknown error")
             }
         }
