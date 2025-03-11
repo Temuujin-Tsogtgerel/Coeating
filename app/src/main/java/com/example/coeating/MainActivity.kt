@@ -1,6 +1,6 @@
-// file: C:/Users/Tem ML.AI/AndroidStudioProjects/Coeating/app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
+// New icon imports for updated drawer options.
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -16,10 +16,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,7 +72,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var photoUri: Uri
     private lateinit var photoFile: File
 
-    // Holds the captured image as a Bitmap
+    // Holds the captured image as a Bitmap.
     private var capturedImage = mutableStateOf<Bitmap?>(null)
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -136,14 +141,13 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp)
                             )
-                            // Dummy drawer items.
                             NavigationDrawerItem(
                                 label = { Text("Explore Partners") },
                                 selected = false,
                                 onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Filled.Settings,
+                                        imageVector = Icons.Filled.People,
                                         contentDescription = "Explore Partners"
                                     )
                                 },
@@ -155,7 +159,7 @@ class MainActivity : ComponentActivity() {
                                 onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Filled.Settings,
+                                        imageVector = Icons.Filled.Star,
                                         contentDescription = "Subscription Plans"
                                     )
                                 },
@@ -167,7 +171,7 @@ class MainActivity : ComponentActivity() {
                                 onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Filled.Settings,
+                                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
                                         contentDescription = "Recipe Guides"
                                     )
                                 },
@@ -179,8 +183,21 @@ class MainActivity : ComponentActivity() {
                                 onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Filled.Settings,
+                                        imageVector = Icons.Filled.Info,
                                         contentDescription = "Contact Support"
+                                    )
+                                },
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                            // New "Close" button added under Contact Support.
+                            NavigationDrawerItem(
+                                label = { Text("Close") },
+                                selected = false,
+                                onClick = { scope.launch { drawerState.close() } },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = "Close Drawer"
                                     )
                                 },
                                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -316,7 +333,7 @@ class MainActivity : ComponentActivity() {
                 "com.example.coeating.fileprovider",
                 photoFile
             )
-            photoUri?.let {
+            photoUri.let {
                 takePictureLauncher.launch(it)
             }
         } catch (ex: IOException) {

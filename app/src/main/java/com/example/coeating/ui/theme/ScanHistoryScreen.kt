@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,7 +45,6 @@ fun ScanHistory(
     var selectedScan by remember { mutableStateOf<ScanResult?>(null) }
 
     if (selectedScan != null) {
-        // Detailed view with a delete option.
         ScanDetailScreen(
             scan = selectedScan!!,
             onDelete = {
@@ -53,11 +54,10 @@ fun ScanHistory(
             onBack = { selectedScan = null }
         )
     } else {
-        // List view of all scans.
         Column(modifier = Modifier.padding(16.dp)) {
             // Top Back Button
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             if (previousScans.isEmpty()) {
                 Text(
@@ -106,12 +106,18 @@ fun ScanDetailScreen(
     onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
-    Column(modifier = Modifier.padding(16.dp)) {
+    // Use a scroll state so that the entire content can be scrolled if needed.
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(scrollState)
+    ) {
         // Back button to return to the list view.
         IconButton(onClick = onBack) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
-        // Display scan details inside a Card.
+        // Display scan details in a Card.
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -139,7 +145,7 @@ fun ScanDetailScreen(
                 )
             }
         }
-        // Delete button that triggers the delete callback.
+        // Delete button – user can scroll down to see it if content is long.
         Button(
             onClick = onDelete,
             modifier = Modifier
@@ -158,7 +164,7 @@ fun ScanDetailScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Delete Scan")
         }
-        // "Go Back" button for users who do not wish to delete.
+        // "Go Back" button.
         Button(
             onClick = onBack,
             modifier = Modifier
@@ -170,7 +176,7 @@ fun ScanDetailScreen(
             )
         ) {
             Icon(
-                Icons.Filled.ArrowBack,
+                Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back Icon",
                 modifier = Modifier.size(24.dp)
             )
