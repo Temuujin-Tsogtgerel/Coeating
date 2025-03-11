@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
 import android.Manifest
@@ -20,8 +21,28 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -70,63 +91,64 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+        // Create an instance of the PreferencesRepository for persistent preferences.
+        val preferencesRepository = PreferencesRepository(this)
+
         setContent {
             CoeatingTheme {
                 val bakingViewModel: BakingViewModel = viewModel()
                 val currentUiState = bakingViewModel.uiState.collectAsState().value
 
-                // App-wide user preferences
-                var userName by remember { mutableStateOf("") }
-                var dietaryPreferences by remember { mutableStateOf("") }
-                var cosmeticPreferences by remember { mutableStateOf("") }
+                // ----- Persistent Preference Implementation Start -----
+                // Use produceState to collect DataStore values for user preferences.
+                val userName by produceState(initialValue = "") {
+                    preferencesRepository.userNameFlow.collect { value = it }
+                }
+                val dietaryPreferences by produceState(initialValue = "") {
+                    preferencesRepository.dietaryPreferencesFlow.collect { value = it }
+                }
+                val cosmeticPreferences by produceState(initialValue = "") {
+                    preferencesRepository.cosmeticPreferencesFlow.collect { value = it }
+                }
+                // ----- Persistent Preference Implementation End -----
 
-                // Track which screen is displayed
+                // Track which screen is displayed; default is "Home".
                 var currentScreen by remember { mutableStateOf("Home") }
 
-                // If user just captured an image, send it to the model
+                // If a photo is captured, process it with the provided prompt that uses the preferences.
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
-                        val prompt = "Check ingredients. If it's food, does it fit " +
-                                "$dietaryPreferences? If it's cosmetics, does it fit $cosmeticPreferences?"
+                        val prompt = "Analyze the ingredients to determine the product type. " +
+                                "If the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
+                                "If it is identified as a cosmetic, assess whether it aligns with the $cosmeticPreferences. " +
+                                "Present your findings in bullet points."
                         bakingViewModel.sendPrompt(bitmap, prompt)
-                        // Reset after sending
                         capturedImage.value = null
                     }
                 }
 
-                // If no user name yet, force them to set preferences at start
-                LaunchedEffect(Unit) {
-                    if (userName.isBlank()) {
-                        currentScreen = "Preferences"
-                    }
-                }
-
-                // Drawer state
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
-                // Side Drawer + Scaffold
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
                             Text(
-                                text = "More Features",
+                                text = "Personalized Ingredient Scanner",
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp)
                             )
-                            // Completely different dummy options below:
+                            // Dummy drawer items
                             NavigationDrawerItem(
                                 label = { Text("Explore Partners") },
                                 selected = false,
                                 onClick = {
                                     scope.launch { drawerState.close() }
-                                    // Example: no special screen yet, so do nothing or
-                                    // set currentScreen to a dummy value like "ExplorePartners"
                                 },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Default.Settings,
+                                        imageVector = Icons.Filled.Settings,
                                         contentDescription = "Explore Partners"
                                     )
                                 },
@@ -137,11 +159,10 @@ class MainActivity : ComponentActivity() {
                                 selected = false,
                                 onClick = {
                                     scope.launch { drawerState.close() }
-                                    // Example: set currentScreen = "SubscriptionPlans"
                                 },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Default.Settings,
+                                        imageVector = Icons.Filled.Settings,
                                         contentDescription = "Subscription Plans"
                                     )
                                 },
@@ -152,11 +173,10 @@ class MainActivity : ComponentActivity() {
                                 selected = false,
                                 onClick = {
                                     scope.launch { drawerState.close() }
-                                    // Example: set currentScreen = "RecipeGuides"
                                 },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Default.Settings,
+                                        imageVector = Icons.Filled.Settings,
                                         contentDescription = "Recipe Guides"
                                     )
                                 },
@@ -167,11 +187,10 @@ class MainActivity : ComponentActivity() {
                                 selected = false,
                                 onClick = {
                                     scope.launch { drawerState.close() }
-                                    // Example: set currentScreen = "ContactSupport"
                                 },
                                 icon = {
                                     Icon(
-                                        imageVector = Icons.Default.Settings,
+                                        imageVector = Icons.Filled.Settings,
                                         contentDescription = "Contact Support"
                                     )
                                 },
@@ -180,22 +199,19 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) {
-                    // TOP-LEVEL Scaffold that includes a Bottom Bar
                     Scaffold(
                         topBar = {
                             TopAppBar(
-                                title = { Text("CoEating - $currentScreen") },
+                                title = { Text(currentScreen) },
                                 navigationIcon = {
                                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                                        Icon(Icons.Filled.Menu, contentDescription = "Menu")
                                     }
                                 }
                             )
                         },
                         bottomBar = {
-                            // Bottom navigation
                             NavigationBar {
-                                // Home item
                                 NavigationBarItem(
                                     selected = (currentScreen == "Home"),
                                     onClick = { currentScreen = "Home" },
@@ -208,7 +224,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 )
-                                // Ingredient Scanner item
                                 NavigationBarItem(
                                     selected = (currentScreen == "IngredientsScanner"),
                                     onClick = { currentScreen = "IngredientsScanner" },
@@ -221,7 +236,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 )
-
                                 NavigationBarItem(
                                     selected = (currentScreen == "ScanHistory"),
                                     onClick = { currentScreen = "ScanHistory" },
@@ -234,7 +248,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 )
-                                // Preferences
                                 NavigationBarItem(
                                     selected = (currentScreen == "Preferences"),
                                     onClick = { currentScreen = "Preferences" },
@@ -251,11 +264,10 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding)) {
-                            // Main content: pick composable based on currentScreen
                             when (currentScreen) {
                                 "Home" -> HomeScreen(
                                     userName = userName,
-                                    onScanClick = { currentScreen = "IngredientScanner" },
+                                    onScanClick = { currentScreen = "IngredientsScanner" },
                                     onPreviousScansClick = { currentScreen = "ScanHistory" },
                                     onPreferencesClick = { currentScreen = "Preferences" }
                                 )
@@ -283,9 +295,10 @@ class MainActivity : ComponentActivity() {
                                     initialDietaryPreferences = dietaryPreferences,
                                     initialCosmeticPreferences = cosmeticPreferences
                                 ) { newName, newDiet, newCosmetic ->
-                                    userName = newName
-                                    dietaryPreferences = newDiet
-                                    cosmeticPreferences = newCosmetic
+                                    // Save the preferences persistently
+                                    scope.launch {
+                                        preferencesRepository.savePreferences(newName, newDiet, newCosmetic)
+                                    }
                                     currentScreen = "Home"
                                 }
                             }
@@ -337,4 +350,3 @@ class MainActivity : ComponentActivity() {
         return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }
 }
-//MainActivity.kt

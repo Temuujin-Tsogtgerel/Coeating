@@ -49,28 +49,31 @@ dependencies {
     // Material Icons Extended dependency for Compose icons
     implementation("androidx.compose.material:material-icons-extended:1.4.0")
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    // Remove duplicate Material3 dependency if present:
-    // implementation(libs.androidx.material3)
-    implementation(libs.generativeai)
-    implementation("io.coil-kt:coil-compose:2.2.2")
+    dependencies {
+        implementation("androidx.datastore:datastore-preferences:1.0.0")
+        implementation(libs.androidx.lifecycle.viewmodel.compose)
+        implementation(libs.androidx.activity.compose)
+        implementation(platform(libs.androidx.compose.bom))
+        implementation(libs.androidx.ui)
+        implementation(libs.androidx.ui.graphics)
+        implementation(libs.androidx.ui.tooling.preview)
+        // Remove duplicate Material3 dependency if present:
+        // implementation(libs.androidx.material3)
+        implementation(libs.generativeai)
+        implementation("io.coil-kt:coil-compose:2.2.2")
 
-    // CameraX dependencies for photo capture functionality.
-    implementation("androidx.camera:camera-core:1.1.0")
-    implementation("androidx.camera:camera-camera2:1.1.0")
-    implementation("androidx.camera:camera-lifecycle:1.1.0")
-    implementation("androidx.camera:camera-view:1.1.0")
+        // CameraX dependencies for photo capture functionality.
+        implementation("androidx.camera:camera-core:1.1.0")
+        implementation("androidx.camera:camera-camera2:1.1.0")
+        implementation("androidx.camera:camera-lifecycle:1.1.0")
+        implementation("androidx.camera:camera-view:1.1.0")
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+        testImplementation(libs.junit)
+        androidTestImplementation(libs.androidx.junit)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(platform(libs.androidx.compose.bom))
+        androidTestImplementation(libs.androidx.ui.test.junit4)
+        debugImplementation(libs.androidx.ui.tooling)
+        debugImplementation(libs.androidx.ui.test.manifest)
+    }
 }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 // Data class for storing scan results.
-data class ScanResult(val foodName: String, val details: String)
+data class ScanResult(val name: String, val details: String)
 
 class BakingViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Initial)
