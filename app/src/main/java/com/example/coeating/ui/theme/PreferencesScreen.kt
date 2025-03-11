@@ -6,7 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
@@ -23,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
 /**
@@ -42,8 +50,16 @@ fun PreferencesScreen(
     val updatedDietary = remember { mutableStateOf(initialDietaryPreferences) }
     val updatedCosmetic = remember { mutableStateOf(initialCosmeticPreferences) }
 
+    // For handling focus navigation between text fields.
+    val focusManager = LocalFocusManager.current
+    // To enable scrolling when keyboard is visible.
+    val scrollState = rememberScrollState()
+
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(scrollState)
+            .imePadding(), // Adjust padding for the IME
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Back button triggers onBack with current values.
@@ -61,7 +77,7 @@ fun PreferencesScreen(
             text = "Preferences",
             style = MaterialTheme.typography.titleLarge
         )
-        // Show current values
+        // Show current values.
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
@@ -100,21 +116,33 @@ fun PreferencesScreen(
                     value = updatedUserName.value,
                     onValueChange = { updatedUserName.value = it },
                     label = { Text("Your name") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = updatedDietary.value,
                     onValueChange = { updatedDietary.value = it },
                     label = { Text("Dietary Preferences") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = updatedCosmetic.value,
                     onValueChange = { updatedCosmetic.value = it },
                     label = { Text("Cosmetic Preferences") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    )
                 )
             }
         }
