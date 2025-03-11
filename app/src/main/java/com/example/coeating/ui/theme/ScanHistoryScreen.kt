@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/example/coeating/ui/theme/ScanHistoryScreen.kt
 package com.example.coeating.ui.theme
 
 import androidx.compose.foundation.clickable
@@ -5,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -12,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,26 +37,28 @@ import com.example.coeating.ScanResult
 @Composable
 fun ScanHistory(
     previousScans: List<ScanResult>,
+    onDeleteScan: (ScanResult) -> Unit,
     onBack: () -> Unit
 ) {
-    // When a scan is selected, we display its detail screen.
     var selectedScan by remember { mutableStateOf<ScanResult?>(null) }
 
     if (selectedScan != null) {
-        // Display a detail screen similar to IngredientScannerScreen design.
+        // Detailed view with a delete option.
         ScanDetailScreen(
             scan = selectedScan!!,
+            onDelete = {
+                onDeleteScan(selectedScan!!)
+                selectedScan = null
+            },
             onBack = { selectedScan = null }
         )
     } else {
-        // Display the scan history list.
+        // List view of all scans.
         Column(modifier = Modifier.padding(16.dp)) {
-            // Back button at the top
+            // Top Back Button
             IconButton(onClick = onBack) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
             }
-
-            // If no previous scans, show an explanation message.
             if (previousScans.isEmpty()) {
                 Text(
                     text = "No scans available yet. Once you scan an item, you'll see it listed here.",
@@ -77,12 +82,10 @@ fun ScanHistory(
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.White
                                 )
-                                // Short snippet for scan details.
-                                val snippet = if (scan.details.length > 50) {
+                                val snippet = if (scan.details.length > 50)
                                     scan.details.substring(0, 50) + "..."
-                                } else {
+                                else
                                     scan.details
-                                }
                                 Text(
                                     text = snippet,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -100,19 +103,15 @@ fun ScanHistory(
 @Composable
 fun ScanDetailScreen(
     scan: ScanResult,
+    onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
-    // This screen mimics the IngredientScannerScreen design.
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-    ) {
-        // Back button at the top to close the detail view.
+    Column(modifier = Modifier.padding(16.dp)) {
+        // Back button to return to the list view.
         IconButton(onClick = onBack) {
             Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
         }
-
-        // Designed card similar to the one in IngredientScannerScreen.
+        // Display scan details inside a Card.
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,13 +125,13 @@ fun ScanDetailScreen(
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.padding(vertical = 8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Food: ${scan.name}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = scan.details,
                     style = MaterialTheme.typography.bodyMedium,
@@ -140,8 +139,26 @@ fun ScanDetailScreen(
                 )
             }
         }
-
-        // Button styled similarly to the Scan Ingredients button.
+        // Delete button that triggers the delete callback.
+        Button(
+            onClick = onDelete,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red,
+                contentColor = Color.White
+            )
+        ) {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "Delete Scan",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Delete Scan")
+        }
+        // "Go Back" button for users who do not wish to delete.
         Button(
             onClick = onBack,
             modifier = Modifier

@@ -1,6 +1,7 @@
 package com.example.coeating.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -17,4 +18,8 @@ interface ScanResultDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScanResult(scanResult: ScanResultEntity): Long
+
+    // New delete method:
+    @Delete
+    suspend fun deleteScanResult(scanResult: ScanResultEntity)
 }

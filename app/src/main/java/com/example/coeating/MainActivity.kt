@@ -1,3 +1,4 @@
+// file: C:/Users/Tem ML.AI/AndroidStudioProjects/Coeating/app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
 import android.Manifest
@@ -93,11 +94,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CoeatingTheme {
-                // Obtain the updated BakingViewModel (which now persists scans via Room).
+                // Obtain the BakingViewModel (which now persists scans via Room).
                 val bakingViewModel: BakingViewModel = viewModel()
                 val currentUiState = bakingViewModel.uiState.collectAsState().value
 
-                // Collect persistent preferences from DataStore with explicit type parameters.
+                // Collect persistent preferences from DataStore.
                 val userName by produceState<String>(initialValue = "") {
                     preferencesRepository.userNameFlow.collect { value = it }
                 }
@@ -111,12 +112,11 @@ class MainActivity : ComponentActivity() {
                 // Track the current screen; default is "Home".
                 var currentScreen by remember { mutableStateOf("Home") }
 
-                // When a photo is captured, process it with a prompt that uses the user’s preferences.
+                // Process the captured image with a prompt using user preferences.
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
-                        val prompt = "Analyze the ingredients to determine the product type. " +
-                                "Return the product type on the first line in the format 'Product Type: [name]'. " +
-                                "Then, if the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
+                        val prompt = "Analyze the ingredients to determine the product type and what the product is. " +
+                                "If the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
                                 "If it is identified as a cosmetic, assess whether it aligns with the $cosmeticPreferences. " +
                                 "Present your findings in bullet points."
                         bakingViewModel.sendPrompt(bitmap, prompt)
@@ -277,6 +277,7 @@ class MainActivity : ComponentActivity() {
                                 )
                                 "ScanHistory" -> ScanHistory(
                                     previousScans = bakingViewModel.previousScans,
+                                    onDeleteScan = { scan -> bakingViewModel.deleteScan(scan) },
                                     onBack = { currentScreen = "Home" }
                                 )
                                 "Preferences" -> PreferencesScreen(
@@ -284,7 +285,6 @@ class MainActivity : ComponentActivity() {
                                     initialDietaryPreferences = dietaryPreferences,
                                     initialCosmeticPreferences = cosmeticPreferences
                                 ) { newName, newDiet, newCosmetic ->
-                                    // Save preferences persistently.
                                     scope.launch {
                                         preferencesRepository.savePreferences(newName, newDiet, newCosmetic)
                                     }
@@ -298,10 +298,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Check if we have camera permission; if yes, proceed to take photo.
-     * Otherwise, request permission.
-     */
     private fun checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
@@ -312,9 +308,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Creates an intent to capture a photo into a File/Uri.
-     */
     private fun dispatchTakePictureIntent() {
         try {
             photoFile = createImageFile()
@@ -331,9 +324,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Creates a temporary image file in the app's picture directory.
-     */
     @Throws(IOException::class)
     private fun createImageFile(): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())

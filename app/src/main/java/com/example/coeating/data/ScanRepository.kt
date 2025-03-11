@@ -17,4 +17,6 @@ class ScanRepository(context: Context) {
     suspend fun getAllScans(): List<ScanResultEntity> = scanResultDao.getAllScanResults()
 
     suspend fun insertScan(scan: ScanResultEntity) = scanResultDao.insertScanResult(scan)
+
+    suspend fun deleteScan(scan: ScanResultEntity) = scanResultDao.deleteScanResult(scan)
 }
