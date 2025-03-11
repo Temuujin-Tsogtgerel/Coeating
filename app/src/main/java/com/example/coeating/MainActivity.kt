@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
 import android.Manifest
@@ -74,48 +73,45 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Register camera intent launcher
-        takePictureLauncher =
-            registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-                if (success) {
-                    val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
-                    capturedImage.value = bitmap
-                }
+        // Register the camera intent launcher.
+        takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+                capturedImage.value = bitmap
             }
+        }
 
-        // Register permission request launcher
-        requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                if (isGranted) {
-                    dispatchTakePictureIntent()
-                }
+        // Register the permission request launcher.
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                dispatchTakePictureIntent()
             }
+        }
 
-        // Create an instance of the PreferencesRepository for persistent preferences.
+        // Create an instance of PreferencesRepository for persistent preferences.
         val preferencesRepository = PreferencesRepository(this)
 
         setContent {
             CoeatingTheme {
+                // Obtain the updated BakingViewModel (which now persists scans via Room).
                 val bakingViewModel: BakingViewModel = viewModel()
                 val currentUiState = bakingViewModel.uiState.collectAsState().value
 
-                // ----- Persistent Preference Implementation Start -----
-                // Use produceState to collect DataStore values for user preferences.
-                val userName by produceState(initialValue = "") {
+                // Collect persistent preferences from DataStore with explicit type parameters.
+                val userName by produceState<String>(initialValue = "") {
                     preferencesRepository.userNameFlow.collect { value = it }
                 }
-                val dietaryPreferences by produceState(initialValue = "") {
+                val dietaryPreferences by produceState<String>(initialValue = "") {
                     preferencesRepository.dietaryPreferencesFlow.collect { value = it }
                 }
-                val cosmeticPreferences by produceState(initialValue = "") {
+                val cosmeticPreferences by produceState<String>(initialValue = "") {
                     preferencesRepository.cosmeticPreferencesFlow.collect { value = it }
                 }
-                // ----- Persistent Preference Implementation End -----
 
-                // Track which screen is displayed; default is "Home".
+                // Track the current screen; default is "Home".
                 var currentScreen by remember { mutableStateOf("Home") }
 
-                // If a photo is captured, process it with the provided prompt that uses the preferences.
+                // When a photo is captured, process it with a prompt that uses the user’s preferences.
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
                         val prompt = "Analyze the ingredients to determine the product type. " +
@@ -139,13 +135,11 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp)
                             )
-                            // Dummy drawer items
+                            // Dummy drawer items.
                             NavigationDrawerItem(
                                 label = { Text("Explore Partners") },
                                 selected = false,
-                                onClick = {
-                                    scope.launch { drawerState.close() }
-                                },
+                                onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
@@ -157,9 +151,7 @@ class MainActivity : ComponentActivity() {
                             NavigationDrawerItem(
                                 label = { Text("Subscription Plans") },
                                 selected = false,
-                                onClick = {
-                                    scope.launch { drawerState.close() }
-                                },
+                                onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
@@ -171,9 +163,7 @@ class MainActivity : ComponentActivity() {
                             NavigationDrawerItem(
                                 label = { Text("Recipe Guides") },
                                 selected = false,
-                                onClick = {
-                                    scope.launch { drawerState.close() }
-                                },
+                                onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
@@ -185,9 +175,7 @@ class MainActivity : ComponentActivity() {
                             NavigationDrawerItem(
                                 label = { Text("Contact Support") },
                                 selected = false,
-                                onClick = {
-                                    scope.launch { drawerState.close() }
-                                },
+                                onClick = { scope.launch { drawerState.close() } },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Settings,
@@ -295,7 +283,7 @@ class MainActivity : ComponentActivity() {
                                     initialDietaryPreferences = dietaryPreferences,
                                     initialCosmeticPreferences = cosmeticPreferences
                                 ) { newName, newDiet, newCosmetic ->
-                                    // Save the preferences persistently
+                                    // Save preferences persistently.
                                     scope.launch {
                                         preferencesRepository.savePreferences(newName, newDiet, newCosmetic)
                                     }
@@ -310,7 +298,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Check if we have Camera permission; if yes, proceed to take photo.
+     * Check if we have camera permission; if yes, proceed to take photo.
      * Otherwise, request permission.
      */
     private fun checkCameraPermissionAndTakePhoto() {
@@ -324,7 +312,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Creates an Intent to capture a photo into a File/Uri.
+     * Creates an intent to capture a photo into a File/Uri.
      */
     private fun dispatchTakePictureIntent() {
         try {
@@ -334,7 +322,9 @@ class MainActivity : ComponentActivity() {
                 "com.example.coeating.fileprovider",
                 photoFile
             )
-            takePictureLauncher.launch(photoUri)
+            photoUri?.let {
+                takePictureLauncher.launch(it)
+            }
         } catch (ex: IOException) {
             ex.printStackTrace()
         }
