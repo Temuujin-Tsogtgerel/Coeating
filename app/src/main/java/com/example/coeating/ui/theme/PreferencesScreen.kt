@@ -13,7 +13,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -70,7 +70,7 @@ fun PreferencesScreen(
                 updatedCosmetic.value
             )
         }) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
 
         Text(
@@ -85,17 +85,17 @@ fun PreferencesScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Name: ${if (initialUserName.isNotBlank()) initialUserName else "Not set"}",
+                    text = "Name: ${initialUserName.ifBlank { "Not set" }}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Dietary Preferences: ${if (initialDietaryPreferences.isNotBlank()) initialDietaryPreferences else "Not set"}",
+                    text = "Dietary Preferences: ${initialDietaryPreferences.ifBlank { "Not set" }}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Cosmetic Preferences: ${if (initialCosmeticPreferences.isNotBlank()) initialCosmeticPreferences else "Not set"}",
+                    text = "Cosmetic Preferences: ${initialCosmeticPreferences.ifBlank { "Not set" }}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
