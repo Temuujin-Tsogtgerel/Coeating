@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/coeating/ui/theme/IngredientScannerScreen.kt
 package com.example.coeating.ui.theme
 
 import android.graphics.Bitmap
@@ -20,8 +19,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -43,7 +39,7 @@ fun IngredientScannerScreen(
     cosmeticPreferences: String,
     onChangePreferences: () -> Unit,
     onBack: () -> Unit,
-    capturedBitmap: Bitmap? = null // Preview image passed from MainActivity){}){}
+    capturedBitmap: Bitmap? = null // Preview image passed from MainActivity
 ) {
     // Show steps only if there is no API result yet.
     val shouldShowSteps = apiResult.isEmpty()
@@ -126,8 +122,9 @@ fun IngredientScannerScreen(
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.height(4.dp))
+                        // Remove asterisks from API result text
                         Text(
-                            text = apiResult,
+                            text = apiResult.replace("*", ""),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -175,15 +172,14 @@ fun StepCard(
     stepDescription: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors()
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
         ) {
             Icon(
@@ -213,21 +209,21 @@ fun PreferencesCard(
     cosmeticPreferences: String,
     onChangePreferences: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors()
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Dietary Preferences: ${if (dietaryPreferences.isNotBlank()) dietaryPreferences else "Not set"}",
+                text = "Dietary Preferences: ${if (dietaryPreferences.isNotBlank()) dietaryPreferences.replace("*", "") else "Not set"}",
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Cosmetic Preferences: ${if (cosmeticPreferences.isNotBlank()) cosmeticPreferences else "Not set"}",
+                text = "Cosmetic Preferences: ${if (cosmeticPreferences.isNotBlank()) cosmeticPreferences.replace("*", "") else "Not set"}",
                 style = MaterialTheme.typography.bodyMedium
             )
             if (dietaryPreferences.isBlank() || cosmeticPreferences.isBlank()) {

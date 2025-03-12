@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/coeating/ui/theme/ScanHistoryScreen.kt
 package com.example.coeating.ui.theme
 
 import android.graphics.BitmapFactory
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -28,10 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -64,23 +60,24 @@ fun ScanCard(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+            // Remove any asterisks from the text fields
             Text(
                 text = "Scan ID: ${scan.id}",
                 style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.7f))
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = scan.name,
+                text = scan.name.replace("*", ""),
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White
             )
             Spacer(modifier = Modifier.height(4.dp))
-            val snippet = if (scan.details.length > 50)
-                scan.details.substring(0, 50) + "..."
+            val cleanDetails = if (scan.details.length > 50)
+                scan.details.substring(0, 50).replace("*", "") + "..."
             else
-                scan.details
+                scan.details.replace("*", "")
             Text(
-                text = snippet,
+                text = cleanDetails,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f)
             )
@@ -94,16 +91,16 @@ fun ScanHistory(
     onDeleteScan: (ScanResult) -> Unit,
     onBack: () -> Unit
 ) {
-    var selectedScan by remember { mutableStateOf<ScanResult?>(null) }
+    val selectedScan = remember { mutableStateOf<ScanResult?>(null) }
 
-    if (selectedScan != null) {
+    if (selectedScan.value != null) {
         ScanDetailScreen(
-            scan = selectedScan!!,
+            scan = selectedScan.value!!,
             onDelete = {
-                onDeleteScan(selectedScan!!)
-                selectedScan = null
+                onDeleteScan(selectedScan.value!!)
+                selectedScan.value = null
             },
-            onBack = { selectedScan = null }
+            onBack = { selectedScan.value = null }
         )
     } else {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -124,7 +121,7 @@ fun ScanHistory(
                 )
                 LazyColumn(contentPadding = PaddingValues(16.dp)) {
                     items(previousScans) { scan ->
-                        ScanCard(scan = scan, onClick = { selectedScan = scan })
+                        ScanCard(scan = scan, onClick = { selectedScan.value = scan })
                     }
                 }
             }
@@ -182,13 +179,13 @@ fun ScanDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Food: ${scan.name}",
+                    text = "Food: ${scan.name.replace("*", "")}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = scan.details,
+                    text = scan.details.replace("*", ""),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.9f)
                 )
@@ -209,7 +206,7 @@ fun ScanDetailScreen(
                 contentDescription = "Delete Scan",
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.size(8.dp))
             Text(text = "Delete Scan")
         }
         Button(
@@ -227,7 +224,7 @@ fun ScanDetailScreen(
                 contentDescription = "Back Icon",
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.size(8.dp))
             Text(text = "Go Back")
         }
     }
