@@ -120,14 +120,18 @@ class MainActivity : ComponentActivity() {
                 // Process the captured image with a prompt using user preferences.
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
-                        val prompt = "Analyze the ingredients to determine the product type and what the product is. " +
-                                "If the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences. " +
-                                "If it is identified as a cosmetic, assess whether it aligns with the $cosmeticPreferences. " +
-                                "Present your findings in bullet points."
+                        val prompt = """
+            Analyze the ingredients to determine the product type and what the product is.
+            Return only a single text string indicating the product type.
+            If the product is identified as food or supplement, evaluate whether it meets the ${dietaryPreferences}.
+            Otherwise, if it is identified as a cosmetic, assess whether it aligns with the ${cosmeticPreferences}.
+            Break your findings into clearly labeled sections with headings.
+        """.trimIndent()
                         bakingViewModel.sendPrompt(bitmap, prompt)
                         capturedImage.value = null
                     }
                 }
+
 
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()

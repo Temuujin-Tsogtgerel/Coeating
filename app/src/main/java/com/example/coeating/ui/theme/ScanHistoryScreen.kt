@@ -142,6 +142,7 @@ fun ScanDetailScreen(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF465B53)), // Set a dark background
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
