@@ -205,18 +205,20 @@ fun StepCard(
     }
 }
 
+
 @Composable
 fun PreferencesCard(
     dietaryPreferences: String,
     cosmeticPreferences: String,
     onChangePreferences: () -> Unit
 ) {
-    Surface(
+    // Only the design of this card has been modified to match PreferencesScreen.
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
