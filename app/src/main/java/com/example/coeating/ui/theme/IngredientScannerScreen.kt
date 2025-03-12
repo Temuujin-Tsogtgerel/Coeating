@@ -1,10 +1,13 @@
+// File: app/src/main/java/com/example/coeating/ui/theme/IngredientScannerScreen.kt
 package com.example.coeating.ui.theme
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,40 +29,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun IngredientScannerScreen(
     onTakePhotoClick: () -> Unit,
     apiResult: String,
-    overallScore: Boolean?,
     dietaryPreferences: String,
     cosmeticPreferences: String,
     onChangePreferences: () -> Unit,
-    onShowPreviousScans: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    capturedBitmap: Bitmap? = null // Preview image passed from MainActivity){}){}
 ) {
-    // State to track if steps should be visible
-    var showSteps by remember { mutableStateOf(true) }
+    // Show steps only if there is no API result yet.
+    val shouldShowSteps = apiResult.isEmpty()
 
     Column(
         modifier = Modifier
-            .padding(16.dp)
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(16.dp)
     ) {
-        // Back button at the top
+        // Back button at the top.
         IconButton(onClick = onBack) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back"
+            )
         }
 
-        // Designed rectangle for Preferences
+        // Preferences card shows current dietary and cosmetic preferences.
         PreferencesCard(
             dietaryPreferences = dietaryPreferences,
             cosmeticPreferences = cosmeticPreferences,
@@ -68,36 +71,44 @@ fun IngredientScannerScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Conditionally show steps only when showSteps is true
-        if (showSteps) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                StepCard(
-                    stepNumber = 1,
-                    stepTitle = "Take Photo",
-                    stepDescription = "We’ll read the ingredients and nutrition label from your photo.",
-                    icon = Icons.Filled.CameraAlt
-                )
-                StepCard(
-                    stepNumber = 2,
-                    stepTitle = "Analyze",
-                    stepDescription = "Our system analyzes the ingredients against your dietary and cosmetic preferences",
-                    icon = Icons.Filled.CameraAlt // Replace with a more appropriate icon if desired
-                )
-                StepCard(
-                    stepNumber = 3,
-                    stepTitle = "Result",
-                    stepDescription = "You’ll see a summary and recommendation below.",
-                    icon = Icons.Filled.CameraAlt // Replace with a more appropriate icon if desired
-                )
-            }
+        // Show step instructions only if there is no API result.
+        if (shouldShowSteps) {
+            StepCard(
+                stepNumber = 1,
+                stepTitle = "Take Photo",
+                stepDescription = "Capture the ingredient label.",
+                icon = Icons.Filled.CameraAlt
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            StepCard(
+                stepNumber = 2,
+                stepTitle = "Analyze",
+                stepDescription = "Your image is being analyzed.",
+                icon = Icons.Filled.CameraAlt
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            StepCard(
+                stepNumber = 3,
+                stepTitle = "Result",
+                stepDescription = "Results will appear below.",
+                icon = Icons.Filled.CameraAlt
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Show a loading indicator or API result if available
+        // Display the captured image if available.
+        capturedBitmap?.let { bitmap ->
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Captured Image Preview",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Display the API result or loading indicator.
         when {
             apiResult == "Loading..." -> {
                 CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
@@ -114,11 +125,11 @@ fun IngredientScannerScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = apiResult,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.9f),
-                            modifier = Modifier.padding(top = 8.dp)
+                            color = Color.White.copy(alpha = 0.9f)
                         )
                     }
                 }
@@ -127,24 +138,18 @@ fun IngredientScannerScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // "Scan Ingredients" button
+        // Button to take a photo (scan ingredients).
         Button(
-            onClick = {
-                // Hide steps and then trigger the scan action
-                showSteps = false
-                onTakePhotoClick()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            onClick = { onTakePhotoClick() },
+            modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFF8635E),
                 contentColor = Color.White
             )
         ) {
             Icon(
-                Icons.Filled.CameraAlt,
-                contentDescription = "Camera Icon"
+                imageVector = Icons.Filled.CameraAlt,
+                contentDescription = "Scan Ingredients"
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
@@ -173,16 +178,17 @@ fun StepCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        shape = MaterialTheme.shapes.medium
+            .padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
         ) {
             Icon(
-                icon,
-                contentDescription = "Step $stepNumber icon",
+                imageVector = icon,
+                contentDescription = "Step $stepNumber",
                 modifier = Modifier.size(36.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -212,8 +218,7 @@ fun PreferencesCard(
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = MaterialTheme.shapes.medium,
-        // You can adjust the elevation and background color as desired
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -225,7 +230,6 @@ fun PreferencesCard(
                 text = "Cosmetic Preferences: ${if (cosmeticPreferences.isNotBlank()) cosmeticPreferences else "Not set"}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            // If either preference is not set, prompt the user to set preferences
             if (dietaryPreferences.isBlank() || cosmeticPreferences.isBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

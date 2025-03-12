@@ -1,6 +1,6 @@
+// File: app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
-// New icon imports for updated drawer options.
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -16,15 +16,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +30,6 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -94,47 +88,51 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Create an instance of PreferencesRepository for persistent preferences.
+        // Create an instance of PreferencesRepository.
         val preferencesRepository = PreferencesRepository(this)
 
         setContent {
             CoeatingTheme {
-                // Obtain the BakingViewModel (which now persists scans via Room).
+                // Obtain the BakingViewModel.
                 val bakingViewModel: BakingViewModel = viewModel()
                 val currentUiState = bakingViewModel.uiState.collectAsState().value
 
-                // Collect persistent preferences from DataStore.
-                val userName by produceState<String>(initialValue = "") {
+                // Collect persistent preferences.
+                val userName by produceState(initialValue = "") {
                     preferencesRepository.userNameFlow.collect { value = it }
                 }
-                val dietaryPreferences by produceState<String>(initialValue = "") {
+                val dietaryPreferences by produceState(initialValue = "") {
                     preferencesRepository.dietaryPreferencesFlow.collect { value = it }
                 }
-                val cosmeticPreferences by produceState<String>(initialValue = "") {
+                val cosmeticPreferences by produceState(initialValue = "") {
                     preferencesRepository.cosmeticPreferencesFlow.collect { value = it }
                 }
 
-                // Track the current screen; default is "Home".
+                // Track the current screen.
                 var currentScreen by remember { mutableStateOf("Home") }
+                // New state to hold the last scanned image for display.
+                var lastScannedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+                val scope = rememberCoroutineScope()
+                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
-                // Process the captured image with a prompt using user preferences.
+                // Process the captured image.
                 LaunchedEffect(capturedImage.value) {
                     capturedImage.value?.let { bitmap ->
+                        // Save the captured bitmap to display later.
+                        lastScannedBitmap = bitmap
+                        val imagePath = photoFile.absolutePath
                         val prompt = """
-            Analyze the ingredients to determine the product type and what the product is.
-            Return only a single text string indicating the product type.
-            If the product is identified as food or supplement, evaluate whether it meets the ${dietaryPreferences}.
-            Otherwise, if it is identified as a cosmetic, assess whether it aligns with the ${cosmeticPreferences}.
-            Break your findings into clearly labeled sections with headings.
-        """.trimIndent()
-                        bakingViewModel.sendPrompt(bitmap, prompt)
+                            Analyze the ingredients to determine the product type and what the product is.
+                            Return a single text string indicating the product type.
+                            If the product is identified as food or supplement, evaluate whether it meets the $dietaryPreferences.
+                            Otherwise, if it is identified as a cosmetic, assess whether it aligns with the $cosmeticPreferences.
+                            Break your findings into clearly labeled sections with headings.
+                        """.trimIndent()
+                        bakingViewModel.sendPrompt(bitmap, prompt, imagePath)
+                        // Clear capturedImage so subsequent scans work.
                         capturedImage.value = null
                     }
                 }
-
-
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                val scope = rememberCoroutineScope()
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -145,67 +143,7 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp)
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Explore Partners") },
-                                selected = false,
-                                onClick = { scope.launch { drawerState.close() } },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.People,
-                                        contentDescription = "Explore Partners"
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            NavigationDrawerItem(
-                                label = { Text("Subscription Plans") },
-                                selected = false,
-                                onClick = { scope.launch { drawerState.close() } },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Star,
-                                        contentDescription = "Subscription Plans"
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            NavigationDrawerItem(
-                                label = { Text("Recipe Guides") },
-                                selected = false,
-                                onClick = { scope.launch { drawerState.close() } },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                                        contentDescription = "Recipe Guides"
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            NavigationDrawerItem(
-                                label = { Text("Contact Support") },
-                                selected = false,
-                                onClick = { scope.launch { drawerState.close() } },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Info,
-                                        contentDescription = "Contact Support"
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            // New "Close" button added under Contact Support.
-                            NavigationDrawerItem(
-                                label = { Text("Close") },
-                                selected = false,
-                                onClick = { scope.launch { drawerState.close() } },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Close,
-                                        contentDescription = "Close Drawer"
-                                    )
-                                },
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
+                            // Additional drawer items can be added here.
                         }
                     }
                 ) {
@@ -289,12 +227,11 @@ class MainActivity : ComponentActivity() {
                                         is UiState.Loading -> "Loading..."
                                         else -> ""
                                     },
-                                    overallScore = if (currentUiState is UiState.Success) currentUiState.overallScore else null,
                                     dietaryPreferences = dietaryPreferences,
                                     cosmeticPreferences = cosmeticPreferences,
                                     onChangePreferences = { currentScreen = "Preferences" },
-                                    onShowPreviousScans = { currentScreen = "ScanHistory" },
-                                    onBack = { currentScreen = "Home" }
+                                    onBack = { currentScreen = "Home" },
+                                    capturedBitmap = lastScannedBitmap
                                 )
                                 "ScanHistory" -> ScanHistory(
                                     previousScans = bakingViewModel.previousScans,
@@ -337,9 +274,7 @@ class MainActivity : ComponentActivity() {
                 "com.example.coeating.fileprovider",
                 photoFile
             )
-            photoUri.let {
-                takePictureLauncher.launch(it)
-            }
+            takePictureLauncher.launch(photoUri)
         } catch (ex: IOException) {
             ex.printStackTrace()
         }

@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/coeating/BakingViewModel.kt
 package com.example.coeating
 
 import android.app.Application
@@ -13,18 +14,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-data class ScanResult(val id: Int, val name: String, val details: String)
+data class ScanResult(
+    val id: Int,
+    val name: String,
+    val details: String,
+    val imagePath: String? = null
+)
 
 class BakingViewModel(application: Application) : AndroidViewModel(application) {
     private val scanRepository = ScanRepository(application)
 
-    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Initial)
+    private val _uiState = MutableStateFlow<UiState>(UiState.Initial)
     val uiState: StateFlow<UiState> = _uiState
 
     private val _previousScans = mutableListOf<ScanResult>()
     val previousScans: List<ScanResult> get() = _previousScans
 
-    // Define the generative model. Ensure that you have added the dependency and that BuildConfig.apiKey is set.
+    // Define the generative model.
     private val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
         apiKey = BuildConfig.apiKey
@@ -33,21 +39,18 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val scans = scanRepository.getAllScans()
-            _previousScans.addAll(scans.map { ScanResult(it.id, it.name, it.details) })
+            _previousScans.addAll(scans.map { ScanResult(it.id, it.name, it.details, it.imagePath) })
         }
     }
 
     fun deleteScan(scan: ScanResult) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Delete from the database
-            scanRepository.deleteScan(ScanResultEntity(scan.id, scan.name, scan.details))
-            // Remove from the in-memory list (this assumes _previousScans is mutable)
+            scanRepository.deleteScan(ScanResultEntity(scan.id, scan.name, scan.details, scan.imagePath))
             _previousScans.remove(scan)
-            // Optionally, trigger a UI update if using a StateFlow or similar
         }
     }
 
-    fun sendPrompt(bitmap: Bitmap, prompt: String) {
+    fun sendPrompt(bitmap: Bitmap, prompt: String, imagePath: String? = null) {
         _uiState.value = UiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -60,22 +63,20 @@ class BakingViewModel(application: Application) : AndroidViewModel(application) 
                     _uiState.value = UiState.Error("Response text was null")
                     return@launch
                 }
+                // Use the full trimmed output instead of a regex extraction.
+                val fullResult = outputContent.trim()
+
                 // Dummy overall score logic.
-                val score = outputContent.contains("friendly", ignoreCase = true)
+                val score = fullResult.contains("friendly", ignoreCase = true)
 
-                // Updated regex extraction.
-                // This expects the generative model to return the product name in the format:
-                // "Product Type: <name>"
-                val regex = Regex("Product Type:\\s*(.+)", RegexOption.IGNORE_CASE)
-                val match = regex.find(outputContent)
-                val foodName = match?.groups?.get(1)?.value?.trim() ?: "Unnamed Scan"
+                // For scan history, we use a shortened version as the 'name'
+                val displayName = if (fullResult.length > 30) fullResult.substring(0, 30) + "..." else fullResult
 
-                // Persist the scan result.
-                val entity = ScanResultEntity(name = foodName, details = outputContent)
-                // Capture the inserted row id (returned as a Long) and convert it to Int.
+                // Persist the scan result with full details.
+                val entity = ScanResultEntity(name = displayName, details = fullResult, imagePath = imagePath)
                 val insertedId = scanRepository.insertScan(entity).toInt()
-                _previousScans.add(ScanResult(insertedId, foodName, outputContent))
-                _uiState.value = UiState.Success(outputContent, score)
+                _previousScans.add(ScanResult(insertedId, displayName, fullResult, imagePath))
+                _uiState.value = UiState.Success(fullResult, score)
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e.localizedMessage ?: "Unknown error")
             }

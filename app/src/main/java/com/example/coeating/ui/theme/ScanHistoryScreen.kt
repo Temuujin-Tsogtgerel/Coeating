@@ -1,6 +1,8 @@
-// file: app/src/main/java/com/example/coeating/ui/theme/ScanHistoryScreen.kt
+// File: app/src/main/java/com/example/coeating/ui/theme/ScanHistoryScreen.kt
 package com.example.coeating.ui.theme
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import com.example.coeating.ScanResult
 
@@ -49,7 +52,18 @@ fun ScanCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Display scan id as metadata.
+            // Show thumbnail if an image path exists.
+            scan.imagePath?.let { path ->
+                val bitmap = BitmapFactory.decodeFile(path)
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Scan image",
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
             Text(
                 text = "Scan ID: ${scan.id}",
                 style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.7f))
@@ -93,7 +107,6 @@ fun ScanHistory(
         )
     } else {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top Back Button
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
@@ -104,7 +117,6 @@ fun ScanHistory(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             } else {
-                // Explanation text before the scan cards.
                 Text(
                     text = "Your scan history is listed below. Each scan card shows its unique ID and a brief overview of the scan details. Tap a card to view full details.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -132,17 +144,29 @@ fun ScanDetailScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        // Back button
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
-        // Card with scan details, including the scan id.
+        // Show a larger preview if available.
+        scan.imagePath?.let { path ->
+            val bitmap = BitmapFactory.decodeFile(path)
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Scan image preview",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF465B53)), // Set a dark background
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF465B53)),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -170,7 +194,6 @@ fun ScanDetailScreen(
                 )
             }
         }
-        // Delete button – user can remove the scan.
         Button(
             onClick = onDelete,
             modifier = Modifier
@@ -189,7 +212,6 @@ fun ScanDetailScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Delete Scan")
         }
-        // "Go Back" button.
         Button(
             onClick = onBack,
             modifier = Modifier

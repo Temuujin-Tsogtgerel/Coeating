@@ -1,4 +1,4 @@
-// file: app/src/main/java/com/example/coeating/data/ScanRepository.kt
+// File: app/src/main/java/com/example/coeating/data/ScanRepository.kt
 package com.example.coeating.data
 
 import android.content.Context
@@ -10,7 +10,9 @@ class ScanRepository(context: Context) {
         context.applicationContext,
         AppDatabase::class.java,
         "coeating_db"
-    ).build()
+    )
+        .fallbackToDestructiveMigration() // This allows destructive migration when schema changes occur.
+        .build()
 
     private val scanResultDao = db.scanResultDao()
 
