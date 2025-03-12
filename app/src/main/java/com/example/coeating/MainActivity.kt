@@ -1,8 +1,9 @@
-// File: app/src/main/java/com/example/coeating/MainActivity.kt
 package com.example.coeating
 
 import android.Manifest
+import androidx.compose.material3.MaterialTheme
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -25,7 +26,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.coeating.ui.theme.CoeatingTheme
 import com.example.coeating.ui.theme.HomeScreen
@@ -72,6 +74,16 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Detect if system is in dark mode.
+        val isNightMode = (resources.configuration.uiMode
+                and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+        // Set status bar icons conditionally:
+        // - If in dark mode: white icons (isAppearanceLightStatusBars = false)
+        // - If in light mode: dark icons (isAppearanceLightStatusBars = true)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !isNightMode
 
         // Register the camera intent launcher.
         takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
